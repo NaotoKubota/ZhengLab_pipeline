@@ -1,0 +1,16 @@
+#################################################
+### Config file for ZhengLab RNA-seq pipeline ###
+#################################################
+
+OUTPUT=/output
+
+NUM_PROCESS=64
+FASTP_ARGS="-q 30 -3"
+STAR_INDEX=/STAR/index_mm10_ensembl_v102
+STAR_ARGS="--outFilterMultimapNmax 1"
+DEEPTOOLS_STRANDED=true
+DEEPTOOLS_ARGS="--binSize 1"
+
+SKIP_STEP1=false
+SKIP_STEP2=false
+SKIP_STEP3=false

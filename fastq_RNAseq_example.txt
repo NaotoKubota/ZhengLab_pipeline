@@ -1,0 +1,3 @@
+paired	sample1	/fastq/sample1_1.fastq.gz	/fastq/sample1_2.fastq.gz
+paired	sample2	/fastq/sample2_1.fastq.gz	/fastq/sample2_2.fastq.gz
+single	sample3	/fastq/sample3.fastq.gz
