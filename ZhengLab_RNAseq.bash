@@ -393,4 +393,3 @@ echo -e \
 Finished!
 Total execution time: ${timestamp}
 "
-	
