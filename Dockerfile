@@ -52,6 +52,12 @@ RUN git clone https://github.com/NaotoKubota/ZhengLab_pipeline.git && \
 # Set PATH
 ENV PATH $PATH:/src:/src/samtools-1.16.1:/src/STAR-2.7.10b/source:/src/ZhengLab_pipeline
 
+# Upgrade pip
+RUN pip install --upgrade pip
+
+# Install ffq (version 0.3.0)
+RUN pip install ffq==0.3.0
+
 # Set working directory
 WORKDIR /home
 
