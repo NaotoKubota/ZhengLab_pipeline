@@ -101,12 +101,34 @@ mkdir -p ${OUTPUTDIR}/fastq/log
 
 # fetch metadata
 echo -e "Fetching metadata ..."
-ffq ${ID} -o ${OUTPUTDIR}/${ID}_metadata.json
+# check if file exists
+if [ ! -f ${OUTPUTDIR}/${ID}_metadata.json ]; then
+
+    echo -e "Downloading ${ID}_metadata.json ..."
+    ffq ${ID} -o ${OUTPUTDIR}/${ID}_metadata.json
+
+else
+
+    echo -e "${ID}_metadata.json already exists!"
+
+fi
 
 
-# fetcj fastq files
+# fetch fastq files
 echo -e "Fetching fastq files ..."
-ffq --ftp ${ID} | jq '.[].url' -r | grep -e "fastq.gz$" > ${OUTPUTDIR}/${ID}_fastq_ftp.txt && \
+# check if file exists
+if [ ! -f ${OUTPUTDIR}/${ID}_fastq_ftp.txt ]; then
+
+    echo -e "Downloading ${ID}_fastq_ftp.txt ..."
+    ffq --ftp ${ID} | jq '.[].url' -r | grep -e "fastq.gz$" > ${OUTPUTDIR}/${ID}_fastq_ftp.txt
+
+else
+
+    echo -e "${ID}_fastq_ftp.txt already exists!"
+
+fi
+
+
 cat ${OUTPUTDIR}/${ID}_fastq_ftp.txt | while read line
 do
 
