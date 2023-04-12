@@ -21,4 +21,4 @@ ZhengLab_RNAseq.bash -i fastq_RNAseq.txt -c config_RNAseq.txt
 ## Docker image
 
 - [naotokubota/ffq](https://github.com/NaotoKubota/ffq): Dockerfile for executing `ZhenLab_Fetch.bash`
-- [Dockerfile_RNAseq](https://github.com/NaotoKubota/ZhengLab_pipeline/blob/main/Dockerfile_RNAseq): Dockerfile for executing `ZhenLab_RNAseq.bash`
+- [Dockerfile_RNAseq](https://github.com/NaotoKubota/ZhengLab_pipeline/blob/main/Dockerfile_RNAseq): Dockerfile for executing `ZhenLab_RNAseq.bash` and `ZhenLab_Fetch.bash`
