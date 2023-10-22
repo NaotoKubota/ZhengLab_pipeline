@@ -11,8 +11,6 @@ samples = ["test1", "test2"]
 
 ## DON'T CHANGE BELOW THIS LINE ##
 
-container: "docker://naotokubota/zhenglab_rnaseq:0.3"
-
 rule all:
     input:
         multiqc = "multiqc/multiqc_report.html",
@@ -22,6 +20,8 @@ rule all:
 rule qc:
     wildcard_constraints:
         sample = "|".join([re.escape(x) for x in samples])
+    container:
+        "docker://quay.io/biocontainers/fastp:0.23.4--hadf994f_2"
     input:
         R1 = "fastq/{sample}_1.fq.gz",
         R2 = "fastq/{sample}_2.fq.gz"
@@ -45,6 +45,8 @@ rule qc:
 rule mapping:
     wildcard_constraints:
         sample = "|".join([re.escape(x) for x in samples])
+    container:
+        "docker://quay.io/biocontainers/star:2.7.11a--h0033a41_0"
     input:
         R1 = "fastp/{sample}_1.fq.gz",
         R2 = "fastp/{sample}_2.fq.gz",
@@ -67,6 +69,8 @@ rule mapping:
 rule sort:
     wildcard_constraints:
         sample = "|".join([re.escape(x) for x in samples])
+    container:
+        "docker://quay.io/biocontainers/samtools:1.18--h50ea8bc_1"
     input:
         "star/{sample}/{sample}_Aligned.out.sam"
     output:
@@ -79,11 +83,14 @@ rule sort:
         "log/samtools_{sample}.log"
     shell:
         "samtools sort -@ {threads} -O bam -o {output} {input} >& {log} && "
+        "samtools index {output} && "
         "rm -rf {input}"
 
 rule bigwig:
     wildcard_constraints:
         sample = "|".join([re.escape(x) for x in samples])
+    container:
+        "docker://quay.io/biocontainers/deeptools:3.5.4--pyhdfd78af_1"
     input:
         "star/{sample}/{sample}_Aligned.out.bam"
     output:
@@ -95,10 +102,11 @@ rule bigwig:
     log:
         "log/bamCoverage_{sample}.log"
     shell:
-        "samtools index {input} && "
         "bamCoverage -b {input} -o {output} -p {threads} --binSize 1 >& {log}"
 
 rule multiqc:
+    container:
+        "docker://ewels/multiqc:latest"
     input:
         json = expand("fastp/log/{sample}_fastp.json", sample = samples),
         starlog = expand("star/{sample}/{sample}_Log.final.out", sample = samples)
