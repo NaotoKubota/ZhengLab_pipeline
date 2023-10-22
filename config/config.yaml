@@ -1,0 +1,3 @@
+workdir: "/rhome/naotok/bigdata/tmp/zhenglab_rnaseq_demo"
+samples: ["test1", "test2"]
+star_index: "index_mm10_ensembl_v102"

@@ -1,15 +1,16 @@
 
+'''
+Snakefile for RNA-seq preprocessing
 
-## CHANGE BELOW THIS LINE ##
-
-workdir: "/rhome/naotok/bigdata/tmp/zhenglab_rnaseq_demo"
-star_index = "index_mm10_ensembl_v102"
-samples = ["test1", "test2"]
-
-## CHANGE ABOVE THIS LINE ##
-
+Usage:
+    snakemake -s Snakefile_preprocessing_RNAseq --configfile <path to config.yaml> --cores <int> --use-singularity
+'''
 
 ## DON'T CHANGE BELOW THIS LINE ##
+
+workdir: config["workdir"]
+star_index = config["star_index"]
+samples = config["samples"]
 
 rule all:
     input:
