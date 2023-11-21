@@ -120,7 +120,7 @@ echo -e "Fetching fastq files ..."
 if [ ! -f ${OUTPUTDIR}/${ID}_fastq_ftp.txt ]; then
 
     echo -e "Downloading ${ID}_fastq_ftp.txt ..."
-    ffq --ftp ${ID} | jq '.[].url' -r | grep -e "fastq.gz$" > ${OUTPUTDIR}/${ID}_fastq_ftp.txt
+    ffq --ftp ${ID} | jq '.[] | .md5 + " " + .url' -r | grep -e "fastq.gz$" > ${OUTPUTDIR}/${ID}_fastq_ftp.txt
 
 else
 
@@ -128,18 +128,25 @@ else
 
 fi
 
-
+rm -rf ${OUTPUTDIR}/fastq/log/md5sum.log && \
+touch ${OUTPUTDIR}/fastq/log/md5sum.log
 cat ${OUTPUTDIR}/${ID}_fastq_ftp.txt | while read line
 do
 
 	# filename
-	filename=$(basename ${line})
+	filename=$(echo -e ${line} | cut -d" " -f 2 | xargs -n1 basename)
+    # URL
+    URL=$(echo -e ${line} | cut -d" " -f 2)
+    # md5
+    md5=$(echo -e ${line} | cut -d" " -f 1)
 
 	# check if file exists
 	if [ ! -f ${OUTPUTDIR}/fastq/${filename} ]; then
 
 		echo -e "Downloading ${filename} ..."
-		wget -P ${OUTPUTDIR}/fastq/ ${line} 2>> ${OUTPUTDIR}/fastq/log/${filename}.log
+		wget -P ${OUTPUTDIR}/fastq/ ${URL} 2>> ${OUTPUTDIR}/fastq/log/${filename}.log && \
+        # md5
+        echo -e "${md5} ${OUTPUTDIR}/fastq/${filename}" | md5sum -c - >> ${OUTPUTDIR}/fastq/log/md5sum.log
 
 	else
 
