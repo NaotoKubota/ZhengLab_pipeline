@@ -24,7 +24,8 @@ workdir: config["general"]["workdir"]
 rule all:
     input:
         multiqc = "multiqc_callpeak/multiqc_report.html",
-        xls = expand("macs2/{sample}/{sample}_peaks.xls", sample = experiment_dict)
+        xls = expand("macs2/{sample}/{sample}_peaks.xls", sample = experiment_dict),
+        bigwig = expand("macs2/{sample}/{sample}_treat_pileup.bw", sample = experiment_dict)
 
 rule macs2:
     wildcard_constraints:
@@ -62,6 +63,28 @@ rule macs2:
         "-q {params.qvalue} "
         "-B -n {wildcards.sample} --outdir {output.outdir} >& {log}; "
         "fi"
+
+rule bedgraphtobigwig:
+    wildcard_constraints:
+        sample = "|".join(experiment_dict)
+    container:
+        "docker://quay.io/biocontainers/ucsc-bedgraphtobigwig:445--h954228d_0"
+    input:
+        bedgraph = "macs2/{sample}/{sample}_treat_pileup.bdg"
+    output:
+        bigwig = "macs2/{sample}/{sample}_treat_pileup.bw"
+    params:
+        assembly = config["bedgraphtobigwig"]["assembly"]
+    benchmark:
+        "benchmark/bedgraphtobigwig/{sample}.txt"
+    log:
+        "log/bedgraphtobigwig/{sample}.log"
+    shell:
+        "wget -O {wildcards.sample}_{params.assembly}.chrom.sizes "
+        "https://hgdownload.cse.ucsc.edu/goldenpath/{params.assembly}/bigZips/{params.assembly}.chrom.sizes && "
+        "bedGraphToBigWig {input.bedgraph} "
+        "{wildcards.sample}_{params.assembly}.chrom.sizes {output.bigwig} >& {log} && "
+        "rm -rf {wildcards.sample}_{params.assembly}.chrom.sizes"
 
 rule multiqc:
     container:
