@@ -21,19 +21,19 @@ RUN wget http://opengene.org/fastp/fastp.0.23.2 && \
 	mv fastp.0.23.2 /src/fastp && \
 	chmod a+x /src/fastp
 
-# Install STAR (version 2.7.10b)
-RUN wget https://github.com/alexdobin/STAR/archive/2.7.10b.tar.gz && \
-	tar -xzf 2.7.10b.tar.gz && \
-	mv STAR-2.7.10b /src/STAR-2.7.10b && \
-	cd /src/STAR-2.7.10b/source && \
+# Install STAR (version 2.7.11a)
+RUN wget https://github.com/alexdobin/STAR/archive/2.7.11a.tar.gz && \
+	tar -xzf 2.7.11a.tar.gz && \
+	mv STAR-2.7.11a /src/STAR-2.7.11a && \
+	cd /src/STAR-2.7.11a/source && \
 	make STAR
 
-# Install Samtools (version 1.16.1)
-RUN wget https://github.com/samtools/samtools/releases/download/1.16.1/samtools-1.16.1.tar.bz2 && \
-	tar jxf samtools-1.16.1.tar.bz2 && \
-	rm -rf samtools-1.16.1.tar.bz2 && \
-	mv samtools-1.16.1 /src/samtools-1.16.1 && \
-	cd /src/samtools-1.16.1/ && \
+# Install Samtools (version 1.18)
+RUN wget https://github.com/samtools/samtools/releases/download/1.18/samtools-1.18.tar.bz2 && \
+	tar jxf samtools-1.18.tar.bz2 && \
+	rm -rf samtools-1.18.tar.bz2 && \
+	mv samtools-1.18 /src/samtools-1.18 && \
+	cd /src/samtools-1.18/ && \
 	./configure --prefix=/where/to/install && \
 	make && \
 	make install
@@ -50,7 +50,7 @@ RUN git clone https://github.com/NaotoKubota/ZhengLab_pipeline.git && \
 	chmod a+x /src/ZhengLab_pipeline/*.bash
 
 # Set PATH
-ENV PATH $PATH:/src:/src/samtools-1.16.1:/src/STAR-2.7.10b/source:/src/ZhengLab_pipeline
+ENV PATH $PATH:/src:/src/samtools-1.18:/src/STAR-2.7.11a/source:/src/ZhengLab_pipeline
 
 # Upgrade pip
 RUN pip install --upgrade pip
