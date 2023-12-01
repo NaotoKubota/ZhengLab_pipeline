@@ -11,7 +11,7 @@ LABEL maintainer="Naoto Kubota <naotok@ucr.edu>"
 # Install dependencies first
 RUN apt-get -qq update && \
 	apt-get -qq -y install \
-	make wget less vim gcc git jq
+	make wget less vim gcc git jq aria2
 
 # mkdir /src
 RUN mkdir /src
