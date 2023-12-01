@@ -144,7 +144,8 @@ do
 	if [ ! -f ${OUTPUTDIR}/fastq/${filename} ]; then
 
 		echo -e "Downloading ${filename} ..."
-		wget -P ${OUTPUTDIR}/fastq/ ${URL} 2>> ${OUTPUTDIR}/fastq/log/${filename}.log && \
+        # Use aria2c to download
+        aria2c -x 16 -d ${OUTPUTDIR}/fastq/ ${URL} 2>> ${OUTPUTDIR}/fastq/log/${filename}.log && \
         # md5
         echo -e "${md5} ${OUTPUTDIR}/fastq/${filename}" | md5sum -c - >> ${OUTPUTDIR}/fastq/log/md5sum.log
 
