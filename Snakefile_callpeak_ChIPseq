@@ -37,7 +37,8 @@ rule macs2:
         control = lambda wildcards: experiment_dict[wildcards.sample]["control"]
     output:
         outdir = directory("macs2/{sample}"),
-        xls = "macs2/{sample}/{sample}_peaks.xls"
+        xls = "macs2/{sample}/{sample}_peaks.xls",
+        bdg = "macs2/{sample}/{sample}_treat_pileup.bdg"
     params:
         genomesize = config["macs2"]["genomesize"],
         fileformat = config["macs2"]["fileformat"],
