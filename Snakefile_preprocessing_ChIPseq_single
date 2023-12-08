@@ -109,7 +109,7 @@ rule markdup:
         "--TMP_DIR bowtie2/tmp && "
         "rm -rf bowtie2/*.sort.bam.bai"
 
-rule sort_markdup:
+rule index:
     wildcard_constraints:
         sample = "|".join([re.escape(x) for x in samples])
     container:
