@@ -24,11 +24,11 @@ rule qc:
     container:
         "docker://quay.io/biocontainers/fastp:0.23.4--hadf994f_2"
     input:
-        R1 = "fastq/{sample}_1.fq.gz",
-        R2 = "fastq/{sample}_2.fq.gz"
+        R1 = "fastq/{sample}_1.fastq.gz",
+        R2 = "fastq/{sample}_2.fastq.gz"
     output:
-        R1 = "fastp/{sample}_1.fq.gz",
-        R2 = "fastp/{sample}_2.fq.gz",
+        R1 = "fastp/{sample}_1.fastq.gz",
+        R2 = "fastp/{sample}_2.fastq.gz",
         json = "fastp/log/{sample}_fastp.json"
     params:
         html = "fastp/log/{sample}_fastp.html"
@@ -49,8 +49,8 @@ rule mapping:
     container:
         "docker://quay.io/biocontainers/star:2.7.11a--h0033a41_0"
     input:
-        R1 = "fastp/{sample}_1.fq.gz",
-        R2 = "fastp/{sample}_2.fq.gz",
+        R1 = "fastp/{sample}_1.fastq.gz",
+        R2 = "fastp/{sample}_2.fastq.gz",
     output:
         sam = "star/{sample}/{sample}_Aligned.out.sam",
         log = "star/{sample}/{sample}_Log.final.out"
