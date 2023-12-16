@@ -14,8 +14,8 @@ group = config["groups"]
 
 rule all:
     input:
-        footprints_bw = expand("footpriting/TOBIAS/ATACorrect/{sample}/{sample}.sort.rmdup_footprints.bw", sample = samples + ["A", "B"]),
-        bindetect_results = "footpriting/TOBIAS/BINDetect/bindetect_results.xlsx"
+        footprints_bw = expand("footprinting/TOBIAS/ATACorrect/{sample}/{sample}.sort.rmdup_footprints.bw", sample = samples + ["A", "B"]),
+        bindetect_results = "footprinting/TOBIAS/BINDetect/bindetect_results.xlsx"
 
 rule merge_peaks:
     container:
@@ -23,7 +23,7 @@ rule merge_peaks:
     input:
         expand("macs2/{sample}/{sample}_peaks.narrowPeak", sample = samples)
     output:
-        "footpriting/merged_peaks.bed"
+        "footprinting/merged_peaks.bed"
     shell:
         '''
         cat {input} | sort -k1,1 -k2,2n | bedtools merge -i stdin -d 1000 | grep -v chrM > {output}
@@ -60,10 +60,10 @@ rule ATACorrect:
         "docker://quay.io/biocontainers/tobias:0.16.0--py38h24c8ff8_0"
     input:
         bam = "bowtie2/{sample}.sort.rmdup.bam",
-        peaks = "footpriting/merged_peaks.bed"
+        peaks = "footprinting/merged_peaks.bed"
     output:
-        outdir = directory("footpriting/TOBIAS/ATACorrect/{sample}"),
-        corrected_bw = "footpriting/TOBIAS/ATACorrect/{sample}/{sample}.sort.rmdup_corrected.bw"
+        outdir = directory("footprinting/TOBIAS/ATACorrect/{sample}"),
+        corrected_bw = "footprinting/TOBIAS/ATACorrect/{sample}/{sample}.sort.rmdup_corrected.bw"
     params:
         genome_fasta = config["genome_fasta"]
     threads:
@@ -89,10 +89,10 @@ rule FootprintScores:
     container:
         "docker://quay.io/biocontainers/tobias:0.16.0--py38h24c8ff8_0"
     input:
-        corrected_bw = "footpriting/TOBIAS/ATACorrect/{sample}/{sample}.sort.rmdup_corrected.bw",
-        peaks = "footpriting/merged_peaks.bed"
+        corrected_bw = "footprinting/TOBIAS/ATACorrect/{sample}/{sample}.sort.rmdup_corrected.bw",
+        peaks = "footprinting/merged_peaks.bed"
     output:
-        footprints_bw = "footpriting/TOBIAS/ATACorrect/{sample}/{sample}.sort.rmdup_footprints.bw"
+        footprints_bw = "footprinting/TOBIAS/ATACorrect/{sample}/{sample}.sort.rmdup_footprints.bw"
     threads:
         16
     benchmark:
@@ -113,12 +113,12 @@ rule BINDetect:
     container:
         "docker://quay.io/biocontainers/tobias:0.16.0--py38h24c8ff8_0"
     input:
-        bw_groupA = "footpriting/TOBIAS/ATACorrect/A/A.sort.rmdup_footprints.bw",
-        bw_groupB = "footpriting/TOBIAS/ATACorrect/B/B.sort.rmdup_footprints.bw",
-        peaks = "footpriting/merged_peaks.bed"
+        bw_groupA = "footprinting/TOBIAS/ATACorrect/A/A.sort.rmdup_footprints.bw",
+        bw_groupB = "footprinting/TOBIAS/ATACorrect/B/B.sort.rmdup_footprints.bw",
+        peaks = "footprinting/merged_peaks.bed"
     output:
-        outdir = directory("footpriting/TOBIAS/BINDetect"),
-        bindetect_results = "footpriting/TOBIAS/BINDetect/bindetect_results.xlsx"
+        outdir = directory("footprinting/TOBIAS/BINDetect"),
+        bindetect_results = "footprinting/TOBIAS/BINDetect/bindetect_results.xlsx"
     params:
         cluster_motifs = config["cluster_motifs"],
         genome_fasta = config["genome_fasta"]
