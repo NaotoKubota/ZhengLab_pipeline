@@ -1,0 +1,135 @@
+
+'''
+Snakefile for differential analysis in ATAC-seq
+
+Usage:
+    snakemake -s Snakefile_differential_ATACseq --configfile <path to config.yaml> --cores <int> --use-singularity
+'''
+
+## DON'T CHANGE BELOW THIS LINE ##
+
+workdir: config["workdir"]
+groups = config["groups"]
+samples = groups["Ref"] + groups["Alt"]
+
+rule all:
+    input:
+        deseq2_results = "differential/deseq2_results.tsv"
+
+rule merge_peaks:
+    container:
+        "docker://quay.io/biocontainers/bedtools:2.24--1"
+    input:
+        expand("macs2/{sample}/{sample}_peaks.narrowPeak", sample = samples)
+    output:
+        temp("differential/merged_peaks.bed")
+    benchmark:
+        "benchmark/merge_peaks.txt"
+    log:
+        "log/differential/merge_peaks.log"
+    shell:
+        '''
+        cat {input} | sort -k1,1 -k2,2n | bedtools merge -i stdin -d 1000 | grep -v chrM > {output}
+        '''
+
+rule make_saf:
+    input:
+        "differential/merged_peaks.bed"
+    output:
+        "differential/merged_peaks.saf"
+    benchmark:
+        "benchmark/make_saf.txt"
+    log:
+        "log/differential/make_saf.log"
+    shell:
+        '''
+        cat {input} | \
+        awk -F"\t" -v OFS="\t" '{{print $1":"$2"-"$3,$1,$2,$3,"+"}}' > {output}
+        '''
+
+rule read_count:
+    wildcard_constraints:
+        sample = "|".join(samples)
+    container:
+        "docker://quay.io/biocontainers/subread:2.0.6--he4a0461_0"
+    input:
+        bam = expand("bowtie2/{sample}.sort.rmdup.bam", sample = samples),
+        saf = "differential/merged_peaks.saf"
+    output:
+        temp("differential/all_counts.tsv")
+    threads:
+        16
+    benchmark:
+        "benchmark/read_count.txt"
+    log:
+        "log/differential/all_counts.log"
+    shell:
+        '''
+        featureCounts \
+        -a {input.saf} \
+        -o {output} \
+        -F SAF \
+        -T {threads} \
+        -O \
+        -p \
+        {input.bam} \
+        > {log} 2>&1
+        '''
+
+rule make_count_table:
+    input:
+        "differential/all_counts.tsv"
+    output:
+        "differential/all_counts_for_DESeq2.tsv"
+    benchmark:
+        "benchmark/make_count_table.txt"
+    log:
+        "log/differential/make_count_table.log"
+    shell:
+        '''
+        cat {input} | \
+        cut -f 1,7- | \
+        sed -e 's@bowtie2/@@g' -e 's@.sort.rmdup.bam@@g' -e 's@Geneid@PeakID@' \
+        > {output}
+        '''
+
+rule make_group_table:
+    params:
+        Ref = config["groups"]["Ref"],
+        Alt = config["groups"]["Alt"]
+    output:
+        "differential/group_table.tsv"
+    shell:
+        '''
+        echo -e "sample\tgroup" > {output}
+        for sample in {params.Ref}:
+        do
+            echo -e "$sample\tRef" >> {output}
+        done
+        for sample in {params.Alt}:
+        do
+            echo -e "$sample\tAlt" >> {output}
+        done
+        sed -i 's@:@@g' {output}
+        '''
+
+rule deseq2:
+    container:
+        "docker://quay.io/biocontainers/bioconductor-deseq2:1.42.0--r43hf17093f_0"
+    input:
+        counts = "differential/all_counts_for_DESeq2.tsv",
+        groups = "differential/group_table.tsv"
+    output:
+        "differential/deseq2_results.tsv"
+    benchmark:
+        "benchmark/deseq2.txt"
+    log:
+        "log/differential/deseq2.log"
+    shell:
+        '''
+        Rscript /rhome/naotok/ZhengLab_pipeline/utils/deseq2.R \
+        {input.groups} {input.counts} {output} \
+        > {log} 2>&1
+        '''
+
+## DON'T CHANGE ABOVE THIS LINE ##
