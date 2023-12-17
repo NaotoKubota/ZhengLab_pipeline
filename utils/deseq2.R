@@ -29,10 +29,10 @@ counts <- read.table(
 counts_t <- t(counts)
 
 print("Merge tables...")
-merged <- merge(counts_t, experiment, by.x = 0, by.y = "sample")
+merged <- merge(counts_t, experiment, by.x = 0, by.y = "bam")
 print("Transpose...")
 group <- data.frame(con = factor(merged$group))
-counts <- merged[, -which (colnames(merged) %in% c("group"))]
+counts <- merged[, -which (colnames(merged) %in% c("sample", "bam", "peak", "group"))]
 rownames(counts) <- counts$Row.names
 counts <- counts[, colnames(counts) != "Row.names"]
 counts <- t(counts)
