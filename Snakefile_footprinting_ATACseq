@@ -8,22 +8,39 @@ Usage:
 
 ## DON'T CHANGE BELOW THIS LINE ##
 
+def load_experiment(file):
+    experiment_dict = {}
+    with open(file, "r") as f:
+        for line in f:
+            sample, bam, peak, group = line.strip().split("\t")
+            if sample == "sample":
+                continue
+            experiment_dict[sample] = {"bam": bam, "peak": peak, "group": group}
+    return experiment_dict
+experiment_dict = load_experiment(config["experiment_table"])
+
 workdir: config["workdir"]
-samples = config["samples"]
-group = config["groups"]
+samples = list(experiment_dict.keys())
+bams = [experiment_dict[x]["bam"] for x in experiment_dict]
+peaks = [experiment_dict[x]["peak"] for x in experiment_dict]
+groups = ["Ref", "Alt"]
 
 rule all:
     input:
-        footprints_bw = expand("footprinting/TOBIAS/ATACorrect/{sample}/{sample}.sort.rmdup_footprints.bw", sample = samples + ["A", "B"]),
-        bindetect_results = "footprinting/TOBIAS/BINDetect/bindetect_results.xlsx"
+        footprints_bw = expand("TOBIAS/ATACorrect/{sample}/{sample}.sort.rmdup_footprints.bw", sample = samples + ["Ref", "Alt"]),
+        bindetect_results = "TOBIAS/BINDetect/bindetect_results.xlsx"
 
 rule merge_peaks:
     container:
         "docker://quay.io/biocontainers/bedtools:2.24--1"
     input:
-        expand("macs2/{sample}/{sample}_peaks.narrowPeak", sample = samples)
+        expand("{peak}", peak = peaks)
     output:
-        "footprinting/merged_peaks.bed"
+        temp("merged_peaks.bed")
+    benchmark:
+        "benchmark/merge_peaks.txt"
+    log:
+        "log/merge_peaks.log"
     shell:
         '''
         cat {input} | sort -k1,1 -k2,2n | bedtools merge -i stdin -d 1000 | grep -v chrM > {output}
@@ -31,47 +48,47 @@ rule merge_peaks:
 
 rule merge_bam:
     wildcard_constraints:
-        merge_group = "A|B"
+        merge_group = "|".join([re.escape(x) for x in groups])
     container:
         "docker://quay.io/biocontainers/samtools:1.18--h50ea8bc_1"
     input:
-        bam = lambda wildcards: expand("bowtie2/{sample}.sort.rmdup.bam", sample = group[str(wildcards.merge_group)])
+        bams = lambda wildcards: expand("{bam}", bam = [experiment_dict[x]["bam"] for x in experiment_dict if experiment_dict[x]["group"] == str(wildcards.merge_group)])
     output:
-        bam = "bowtie2/{merge_group}.sort.rmdup.bam"
+        bam = "{merge_group}.sort.rmdup.bam"
     threads:
         16
     benchmark:
-        "benchmark/footprinting/bam_merge/{merge_group}.txt"
+        "benchmark/TOBIAS/bam_merge/{merge_group}.txt"
     log:
-        "log/footprinting/bam_merge/{merge_group}.log"
+        "log/TOBIAS/bam_merge/{merge_group}.log"
     shell:
         '''
         samtools merge \
         -@ {threads} \
         -o {output.bam} \
-        {input.bam} \
+        {input.bams} \
         > {log} 2>&1
         '''
 
 rule ATACorrect:
     wildcard_constraints:
-        sample = "|".join([re.escape(x) for x in samples] + ["A", "B"])
+        sample = "|".join([re.escape(x) for x in samples] + ["Ref", "Alt"])
     container:
         "docker://quay.io/biocontainers/tobias:0.16.0--py38h24c8ff8_0"
     input:
-        bam = "bowtie2/{sample}.sort.rmdup.bam",
-        peaks = "footprinting/merged_peaks.bed"
+        bam = lambda wildcards: experiment_dict[wildcards.sample]["bam"] if wildcards.sample in samples else str(wildcards.sample) + ".sort.rmdup.bam",
+        peaks = "merged_peaks.bed"
     output:
-        outdir = directory("footprinting/TOBIAS/ATACorrect/{sample}"),
-        corrected_bw = "footprinting/TOBIAS/ATACorrect/{sample}/{sample}.sort.rmdup_corrected.bw"
+        outdir = directory("TOBIAS/ATACorrect/{sample}"),
+        corrected_bw = "TOBIAS/ATACorrect/{sample}/{sample}.sort.rmdup_corrected.bw"
     params:
         genome_fasta = config["genome_fasta"]
     threads:
         16
     benchmark:
-        "benchmark/footprinting/ATACorrect/{sample}.txt"
+        "benchmark/TOBIAS/ATACorrect/{sample}.txt"
     log:
-        "log/footprinting/ATACorrect/{sample}.log"
+        "log/TOBIAS/ATACorrect/{sample}.log"
     shell:
         '''
         TOBIAS ATACorrect \
@@ -85,20 +102,20 @@ rule ATACorrect:
 
 rule FootprintScores:
     wildcard_constraints:
-        sample = "|".join([re.escape(x) for x in samples] + ["A", "B"])
+        sample = "|".join([re.escape(x) for x in samples] + ["Ref", "Alt"])
     container:
         "docker://quay.io/biocontainers/tobias:0.16.0--py38h24c8ff8_0"
     input:
-        corrected_bw = "footprinting/TOBIAS/ATACorrect/{sample}/{sample}.sort.rmdup_corrected.bw",
-        peaks = "footprinting/merged_peaks.bed"
+        corrected_bw = "TOBIAS/ATACorrect/{sample}/{sample}.sort.rmdup_corrected.bw",
+        peaks = "merged_peaks.bed"
     output:
-        footprints_bw = "footprinting/TOBIAS/ATACorrect/{sample}/{sample}.sort.rmdup_footprints.bw"
+        footprints_bw = "TOBIAS/ATACorrect/{sample}/{sample}.sort.rmdup_footprints.bw"
     threads:
         16
     benchmark:
-        "benchmark/footprinting/FootprintScores/{sample}.txt"
+        "benchmark/TOBIAS/FootprintScores/{sample}.txt"
     log:
-        "log/footprinting/FootprintScores/{sample}.log"
+        "log/TOBIAS/FootprintScores/{sample}.log"
     shell:
         '''
         TOBIAS FootprintScores \
@@ -113,26 +130,26 @@ rule BINDetect:
     container:
         "docker://quay.io/biocontainers/tobias:0.16.0--py38h24c8ff8_0"
     input:
-        bw_groupA = "footprinting/TOBIAS/ATACorrect/A/A.sort.rmdup_footprints.bw",
-        bw_groupB = "footprinting/TOBIAS/ATACorrect/B/B.sort.rmdup_footprints.bw",
-        peaks = "footprinting/merged_peaks.bed"
+        bw_Ref = "TOBIAS/ATACorrect/Ref/Ref.sort.rmdup_footprints.bw",
+        bw_Alt = "TOBIAS/ATACorrect/Alt/Alt.sort.rmdup_footprints.bw",
+        peaks = "merged_peaks.bed"
     output:
-        outdir = directory("footprinting/TOBIAS/BINDetect"),
-        bindetect_results = "footprinting/TOBIAS/BINDetect/bindetect_results.xlsx"
+        outdir = directory("TOBIAS/BINDetect"),
+        bindetect_results = "TOBIAS/BINDetect/bindetect_results.xlsx"
     params:
         cluster_motifs = config["cluster_motifs"],
         genome_fasta = config["genome_fasta"]
     threads:
         1000
     benchmark:
-        "benchmark/footprinting/BINDetect.txt"
+        "benchmark/TOBIAS/BINDetect.txt"
     log:
-        "log/footprinting/BINDetect.log"
+        "log/TOBIAS/BINDetect.log"
     shell:
         '''
         TOBIAS BINDetect \
         --motifs {params.cluster_motifs} \
-        --signals {input.bw_groupB} {input.bw_groupA} \
+        --signals {input.bw_Alt} {input.bw_Ref} \
         --genome {params.genome_fasta} \
         --peaks {input.peaks} \
         --outdir {output.outdir} \
