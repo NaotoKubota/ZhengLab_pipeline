@@ -191,10 +191,10 @@ rule multiqc:
     log:
         "log/multiqc.log"
     shell:
-        "rm -rf multiqc && "
-        "mkdir -p multiqc/log && "
-        "cp {input.json} {input.bowtie2log} {input.picardlog} {input.plotFingerprintlog_qc} {input.plotFingerprintlog_tab} multiqc/log && "
-        "multiqc -o multiqc_preprocessing/ multiqc/log >& {log} && "
-        "rm -rf multiqc/log"
+        "rm -rf multiqc_preprocessing && "
+        "mkdir -p multiqc_preprocessing/log && "
+        "cp {input.json} {input.bowtie2log} {input.picardlog} {input.plotFingerprintlog_qc} {input.plotFingerprintlog_tab} multiqc_preprocessing/log && "
+        "multiqc -o multiqc_preprocessing/ multiqc_preprocessing/log >& {log} && "
+        "rm -rf multiqc_preprocessing/log"
 
 ## DON'T CHANGE ABOVE THIS LINE ##
