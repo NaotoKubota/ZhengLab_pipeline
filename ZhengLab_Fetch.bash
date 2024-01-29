@@ -105,7 +105,7 @@ echo -e "Fetching metadata ..."
 if [ ! -f ${OUTPUTDIR}/${ID}_metadata.json ]; then
 
     echo -e "Downloading ${ID}_metadata.json ..."
-    ffq ${ID} -o ${OUTPUTDIR}/${ID}_metadata.json
+    ffq --verbose ${ID} -o ${OUTPUTDIR}/${ID}_metadata.json
 
 else
 
@@ -120,7 +120,7 @@ echo -e "Fetching fastq files ..."
 if [ ! -f ${OUTPUTDIR}/${ID}_fastq_ftp.txt ]; then
 
     echo -e "Downloading ${ID}_fastq_ftp.txt ..."
-    ffq --ftp ${ID} | jq '.[] | .md5 + " " + .url' -r | grep -e "fastq.gz$" > ${OUTPUTDIR}/${ID}_fastq_ftp.txt
+    ffq --verbose --ftp ${ID} | jq '.[] | .md5 + " " + .url' -r | grep -e "fastq.gz$" > ${OUTPUTDIR}/${ID}_fastq_ftp.txt
 
 else
 
