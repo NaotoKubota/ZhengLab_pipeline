@@ -107,7 +107,7 @@ rule bigwig:
 
 rule multiqc:
     container:
-        "docker://ewels/multiqc:latest"
+        "docker://ewels/multiqc:v1.19"
     input:
         json = expand("fastp/log/{sample}_fastp.json", sample = samples),
         starlog = expand("star/{sample}/{sample}_Log.final.out", sample = samples)

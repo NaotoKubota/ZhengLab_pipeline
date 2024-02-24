@@ -89,7 +89,7 @@ rule bedgraphtobigwig:
 
 rule multiqc:
     container:
-        "docker://ewels/multiqc:latest"
+        "docker://ewels/multiqc:v1.19"
     input:
         macs2log = expand("macs2/{sample}/{sample}_peaks.xls", sample = experiment_dict)
     output:
