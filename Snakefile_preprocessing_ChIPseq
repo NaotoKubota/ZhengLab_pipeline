@@ -173,7 +173,7 @@ rule bigwig:
     log:
         "log/bamCoverage_{sample}.log"
     shell:
-        "bamCoverage -b {input.bam} -o {output} -p {threads} --binSize 1 >& {log}"
+        "bamCoverage -b {input.bam} -o {output} -p {threads} --binSize 1 --normalizeUsing CPM >& {log}"
 
 rule multiqc:
     container:

@@ -170,7 +170,7 @@ rule bigwig:
     log:
         "log/bamCoverage_{sample}.log"
     shell:
-        "bamCoverage -b {input.bam} -o {output} -p {threads} --binSize 1 >& {log}"
+        "bamCoverage -b {input.bam} -o {output} -p {threads} --binSize 1 --normalizeUsing CPM >& {log}"
 
 rule multiqc:
     container:
@@ -188,10 +188,10 @@ rule multiqc:
     log:
         "log/multiqc.log"
     shell:
-        "rm -rf multiqc && "
-        "mkdir -p multiqc/log && "
-        "cp {input.json} {input.bowtie2log} {input.picardlog} {input.plotFingerprintlog_qc} {input.plotFingerprintlog_tab} multiqc/log && "
-        "multiqc -o multiqc_preprocessing/ multiqc/log >& {log} && "
-        "rm -rf multiqc/log"
+        "rm -rf multiqc_preprocessing && "
+        "mkdir -p multiqc_preprocessing/log && "
+        "cp {input.json} {input.bowtie2log} {input.picardlog} {input.plotFingerprintlog_qc} {input.plotFingerprintlog_tab} multiqc_preprocessing/log && "
+        "multiqc -o multiqc_preprocessing/ multiqc_preprocessing/log >& {log} && "
+        "rm -rf multiqc_preprocessing/log"
 
 ## DON'T CHANGE ABOVE THIS LINE ##
