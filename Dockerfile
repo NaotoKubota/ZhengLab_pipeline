@@ -27,11 +27,8 @@ ENV PATH $PATH:/src:/src/ZhengLab_pipeline
 # Upgrade pip
 RUN pip install --upgrade pip
 
-# Install ffq (version 0.3.0)
-RUN pip install ffq==0.3.0
-
-# Modify utils.py
-RUN sed -i 's@return BeautifulSoup(cached_get(f"{ENA_URL}/{accession}/"), "xml")@return BeautifulSoup(cached_get(f"{ENA_URL}/{accession}"), "xml")@' /usr/local/lib/python3.11/site-packages/ffq/utils.py
+# Install ffq (version 0.3.1)
+RUN pip install ffq==0.3.1
 
 # Set working directory
 WORKDIR /home
