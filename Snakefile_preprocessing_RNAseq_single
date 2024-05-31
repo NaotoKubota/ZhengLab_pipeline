@@ -3,7 +3,7 @@
 Snakefile for RNA-seq preprocessing
 
 Usage:
-    snakemake -s Snakefile_preprocessing_RNAseq --configfile <path to config.yaml> --cores <int> --use-singularity
+    snakemake -s Snakefile_preprocessing_RNAseq_single --configfile <path to config.yaml> --cores <int> --use-singularity
 '''
 
 ## DON'T CHANGE BELOW THIS LINE ##
@@ -24,11 +24,9 @@ rule qc:
     container:
         "docker://quay.io/biocontainers/fastp:0.23.4--hadf994f_2"
     input:
-        R1 = "fastq/{sample}_1.fastq.gz",
-        R2 = "fastq/{sample}_2.fastq.gz"
+        R1 = "fastq/{sample}.fastq.gz"
     output:
-        R1 = "fastp/{sample}_1.fastq.gz",
-        R2 = "fastp/{sample}_2.fastq.gz",
+        R1 = "fastp/{sample}.fastq.gz",
         json = "fastp/log/{sample}_fastp.json"
     params:
         html = "fastp/log/{sample}_fastp.html"
@@ -39,8 +37,8 @@ rule qc:
     log:
         "log/fastp_{sample}.log"
     shell:
-        "fastp -i {input.R1} -I {input.R2} "
-        "-o {output.R1} -O {output.R2} -w {threads} "
+        "fastp -i {input.R1} "
+        "-o {output.R1} -w {threads} "
         "-h {params.html} -j {output.json} >& {log}"
 
 rule mapping:
@@ -49,8 +47,7 @@ rule mapping:
     container:
         "docker://quay.io/biocontainers/star:2.7.11a--h0033a41_0"
     input:
-        R1 = "fastp/{sample}_1.fastq.gz",
-        R2 = "fastp/{sample}_2.fastq.gz",
+        R1 = "fastp/{sample}.fastq.gz"
     output:
         sam = "star/{sample}/{sample}_Aligned.out.sam",
         log = "star/{sample}/{sample}_Log.final.out"
@@ -65,7 +62,7 @@ rule mapping:
     shell:
         "STAR --runThreadN {threads} --genomeDir {star_index} "
         "--outFilterMultimapNmax 1 "
-        "--readFilesIn {input.R1} {input.R2} --readFilesCommand zcat --outFileNamePrefix {params.outdir} >& {log}"
+        "--readFilesIn {input.R1} --readFilesCommand zcat --outFileNamePrefix {params.outdir} >& {log}"
 
 rule sort:
     wildcard_constraints:
