@@ -57,7 +57,7 @@ rule mapping:
     params:
         outdir = "star/{sample}/{sample}_"
     threads:
-        1000
+        workflow.cores
     benchmark:
         "benchmark/star_{sample}.txt"
     log:
