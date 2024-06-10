@@ -77,7 +77,7 @@ rule sort:
     output:
         "star/{sample}/{sample}_Aligned.out.bam"
     threads:
-        8
+        workflow.cores / 4
     benchmark:
         "benchmark/samtools_{sample}.txt"
     log:
