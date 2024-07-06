@@ -97,7 +97,7 @@ rule bigwig:
     output:
         "bigwig/{sample}.bw"
     threads:
-        8
+        workflow.cores / 4
     benchmark:
         "benchmark/bamCoverage_{sample}.txt"
     log:
