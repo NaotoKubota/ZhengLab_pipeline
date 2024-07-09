@@ -1,3 +1,7 @@
 *svg
 .snakemake
 logs
+
+config/*yaml
+config/*txt
+config/*tsv
