@@ -2,6 +2,6 @@
 .snakemake
 logs
 
-config/*yaml
+config/*_test.yaml
 config/*txt
 config/*tsv
