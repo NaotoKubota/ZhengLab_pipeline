@@ -169,6 +169,7 @@ rule differentialAnalysis:
         -i {config[min_samples_per_intron]} \
         -e {input.exon} \
         -o {params.output_prefix} \
+        -g {config[min_samples_per_group]} \
         {input.clusters} \
         {input.groupfile} \
         >& {log}
