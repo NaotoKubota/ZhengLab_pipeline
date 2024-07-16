@@ -7,14 +7,43 @@ Usage:
 '''
 
 import os
-
+import pandas as pd
 workdir: config['workdir']
 absolute_path_to_workdir = os.path.abspath(config['workdir'])
-samples = list(config['samples']['group1'].keys()) + list(config['samples']['group2'].keys())
-samples_group1 = list(config['samples']['group1'].keys())
-samples_group2 = list(config['samples']['group2'].keys())
-# Make dictionary with sample name as key and fastq file as value
-sample_fastq_dict = {sample: config['samples'][group][sample] for group in config['samples'] for sample in config['samples'][group]}
+
+'''experiment_table
+sample	fastq	group
+SRR536342	/rhome/naotok/bigdata/Shiba/GEO/SRP014759/fastp/SRR536342_1.fastq.gz,/rhome/naotok/bigdata/Shiba/GEO/SRP014759/fastp/SRR536342_2.fastq.gz	Ref
+SRR536344	/rhome/naotok/bigdata/Shiba/GEO/SRP014759/fastp/SRR536344_1.fastq.gz,/rhome/naotok/bigdata/Shiba/GEO/SRP014759/fastp/SRR536344_2.fastq.gz	Ref
+SRR536346	/rhome/naotok/bigdata/Shiba/GEO/SRP014759/fastp/SRR536346_1.fastq.gz,/rhome/naotok/bigdata/Shiba/GEO/SRP014759/fastp/SRR536346_2.fastq.gz	Ref
+SRR536348	/rhome/naotok/bigdata/Shiba/GEO/SRP014759/fastp/SRR536348_1.fastq.gz,/rhome/naotok/bigdata/Shiba/GEO/SRP014759/fastp/SRR536348_2.fastq.gz	Alt
+SRR536350	/rhome/naotok/bigdata/Shiba/GEO/SRP014759/fastp/SRR536350_1.fastq.gz,/rhome/naotok/bigdata/Shiba/GEO/SRP014759/fastp/SRR536350_2.fastq.gz	Alt
+SRR536352	/rhome/naotok/bigdata/Shiba/GEO/SRP014759/fastp/SRR536352_1.fastq.gz,/rhome/naotok/bigdata/Shiba/GEO/SRP014759/fastp/SRR536352_2.fastq.gz	Alt
+'''
+
+# Read in the experiment table
+def read_experiment_table(experiment_table):
+    df = pd.read_csv(experiment_table, sep = "\t")
+    samples = df['sample'].tolist()
+    samples_Ref = df[df['group'] == 'Ref']['sample'].tolist()
+    samples_Alt = df[df['group'] == 'Alt']['sample'].tolist()
+    # Make dictionary with sample name as key and fastq file as value
+    '''
+    {
+        sample1: {
+            R1: /path/to/sample1_R1.fastq.gz,
+            R2: /path/to/sample1_R2.fastq.gz
+        },
+        sample2: {
+            R1: /path/to/sample2_R1.fastq.gz,
+            R2: /path/to/sample2_R2.fastq.gz
+        }
+    }
+    '''
+    sample_fastq_dict = {sample: {'R1': os.path.join(absolute_path_to_workdir, fastq.split(',')[0]), 'R2': os.path.join(absolute_path_to_workdir, fastq.split(',')[1])} for sample, fastq in zip(df['sample'], df['fastq'])}
+    return samples, samples_Ref, samples_Alt, sample_fastq_dict
+
+samples, samples_Ref, samples_Alt, sample_fastq_dict = read_experiment_table(config['experiment_table'])
 
 rule all:
     input:
@@ -58,8 +87,8 @@ rule delta:
     output:
         diff = "delta/group.diff.gz"
     params:
-        psi_group1 = ",".join([x + ".psi.gz" for x in samples_group1]),
-        psi_group2 = ",".join([x + ".psi.gz" for x in samples_group2])
+        psi_Ref = ",".join([x + ".psi.gz" for x in samples_Ref]),
+        psi_Alt = ",".join([x + ".psi.gz" for x in samples_Alt])
     threads:
         1
     benchmark:
@@ -71,8 +100,8 @@ rule delta:
         mkdir -p delta/ && \
         cd quant/all && \
         julia /whippet/bin/whippet-delta.jl \
-        -a {params.psi_group1}, \
-        -b {params.psi_group2}, \
+        -a {params.psi_Ref}, \
+        -b {params.psi_Alt}, \
         -o ../../delta/group \
         -r 10 \
         >& ../../{log}
