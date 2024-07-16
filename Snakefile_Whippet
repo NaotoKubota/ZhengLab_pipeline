@@ -13,12 +13,12 @@ absolute_path_to_workdir = os.path.abspath(config['workdir'])
 
 '''experiment_table
 sample	fastq	group
-SRR536342	/rhome/naotok/bigdata/Shiba/GEO/SRP014759/fastp/SRR536342_1.fastq.gz,/rhome/naotok/bigdata/Shiba/GEO/SRP014759/fastp/SRR536342_2.fastq.gz	Ref
-SRR536344	/rhome/naotok/bigdata/Shiba/GEO/SRP014759/fastp/SRR536344_1.fastq.gz,/rhome/naotok/bigdata/Shiba/GEO/SRP014759/fastp/SRR536344_2.fastq.gz	Ref
-SRR536346	/rhome/naotok/bigdata/Shiba/GEO/SRP014759/fastp/SRR536346_1.fastq.gz,/rhome/naotok/bigdata/Shiba/GEO/SRP014759/fastp/SRR536346_2.fastq.gz	Ref
-SRR536348	/rhome/naotok/bigdata/Shiba/GEO/SRP014759/fastp/SRR536348_1.fastq.gz,/rhome/naotok/bigdata/Shiba/GEO/SRP014759/fastp/SRR536348_2.fastq.gz	Alt
-SRR536350	/rhome/naotok/bigdata/Shiba/GEO/SRP014759/fastp/SRR536350_1.fastq.gz,/rhome/naotok/bigdata/Shiba/GEO/SRP014759/fastp/SRR536350_2.fastq.gz	Alt
-SRR536352	/rhome/naotok/bigdata/Shiba/GEO/SRP014759/fastp/SRR536352_1.fastq.gz,/rhome/naotok/bigdata/Shiba/GEO/SRP014759/fastp/SRR536352_2.fastq.gz	Alt
+sample_01	/path/to/sample_01_1.fastq.gz,/path/to/sample_01_2.fastq.gz	Ref
+sample_02	/path/to/sample_02_1.fastq.gz,/path/to/sample_02_2.fastq.gz	Ref
+sample_03	/path/to/sample_03_1.fastq.gz,/path/to/sample_03_2.fastq.gz	Ref
+sample_04	/path/to/sample_04_1.fastq.gz,/path/to/sample_04_2.fastq.gz	Alt
+sample_05	/path/to/sample_05_1.fastq.gz,/path/to/sample_05_2.fastq.gz	Alt
+sample_06	/path/to/sample_06_1.fastq.gz,/path/to/sample_06_2.fastq.gz	Alt
 '''
 
 # Read in the experiment table
