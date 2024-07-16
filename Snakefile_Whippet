@@ -100,8 +100,8 @@ rule delta:
         mkdir -p delta/ && \
         cd quant/all && \
         julia /whippet/bin/whippet-delta.jl \
-        -a {params.psi_Ref}, \
-        -b {params.psi_Alt}, \
+        -a {params.psi_Alt}, \
+        -b {params.psi_Ref}, \
         -o ../../delta/group \
         -r 10 \
         >& ../../{log}
