@@ -11,13 +11,13 @@ import pandas as pd
 workdir: config['workdir']
 
 '''experiment_table
-sample	fastq	group
-sample_01	/path/to/sample_01_1.fastq.gz,/path/to/sample_01_2.fastq.gz	Ref
-sample_02	/path/to/sample_02_1.fastq.gz,/path/to/sample_02_2.fastq.gz	Ref
-sample_03	/path/to/sample_03_1.fastq.gz,/path/to/sample_03_2.fastq.gz	Ref
-sample_04	/path/to/sample_04_1.fastq.gz,/path/to/sample_04_2.fastq.gz	Alt
-sample_05	/path/to/sample_05_1.fastq.gz,/path/to/sample_05_2.fastq.gz	Alt
-sample_06	/path/to/sample_06_1.fastq.gz,/path/to/sample_06_2.fastq.gz	Alt
+sample	bam	group
+sample_01	/path/to/sample_01.bam	Ref
+sample_02	/path/to/sample_02.bam	Ref
+sample_03	/path/to/sample_03.bam	Ref
+sample_04	/path/to/sample_04.bam	Alt
+sample_05	/path/to/sample_05.bam	Alt
+sample_06	/path/to/sample_06.bam	Alt
 '''
 
 def get_bam_list(experiment_table):
