@@ -3,5 +3,6 @@
 logs
 
 config/*_test.yaml
+config/*_example.yaml
 config/*txt
 config/*tsv
