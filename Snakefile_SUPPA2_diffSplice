@@ -1,20 +1,49 @@
 
 '''
-Snakefile for SUPPA2 diffSplice between group1 and group2
+Snakefile for SUPPA2 diffSplice between Ref and Alt
 
 Usage:
     snakemake -s Snakefile_SUPPA2 --configfile config.yaml --cores <int> --use-singularity
 '''
 
 import os
-
+import pandas as pd
 workdir: config['workdir']
 absolute_path_to_workdir = os.path.abspath(config['workdir'])
-samples = list(config['samples']['group1'].keys()) + list(config['samples']['group2'].keys())
-samples_group1 = list(config['samples']['group1'].keys())
-samples_group2 = list(config['samples']['group2'].keys())
-# Make dictionary with sample name as key and fastq file as value
-sample_fastq_dict = {sample: config['samples'][group][sample] for group in config['samples'] for sample in config['samples'][group]}
+
+'''experiment_table
+sample	fastq	group
+sample_01	/path/to/sample_01_1.fastq.gz,/path/to/sample_01_2.fastq.gz	Ref
+sample_02	/path/to/sample_02_1.fastq.gz,/path/to/sample_02_2.fastq.gz	Ref
+sample_03	/path/to/sample_03_1.fastq.gz,/path/to/sample_03_2.fastq.gz	Ref
+sample_04	/path/to/sample_04_1.fastq.gz,/path/to/sample_04_2.fastq.gz	Alt
+sample_05	/path/to/sample_05_1.fastq.gz,/path/to/sample_05_2.fastq.gz	Alt
+sample_06	/path/to/sample_06_1.fastq.gz,/path/to/sample_06_2.fastq.gz	Alt
+'''
+
+# Read in the experiment table
+def read_experiment_table(experiment_table):
+    df = pd.read_csv(experiment_table, sep = "\t")
+    samples = df['sample'].tolist()
+    samples_Ref = df[df['group'] == 'Ref']['sample'].tolist()
+    samples_Alt = df[df['group'] == 'Alt']['sample'].tolist()
+    # Make dictionary with sample name as key and fastq file as value
+    '''
+    {
+        sample1: {
+            R1: /path/to/sample1_R1.fastq.gz,
+            R2: /path/to/sample1_R2.fastq.gz
+        },
+        sample2: {
+            R1: /path/to/sample2_R1.fastq.gz,
+            R2: /path/to/sample2_R2.fastq.gz
+        }
+    }
+    '''
+    sample_fastq_dict = {sample: {'R1': os.path.join(absolute_path_to_workdir, fastq.split(',')[0]), 'R2': os.path.join(absolute_path_to_workdir, fastq.split(',')[1])} for sample, fastq in zip(df['sample'], df['fastq'])}
+    return samples, samples_Ref, samples_Alt, sample_fastq_dict
+
+samples, samples_Ref, samples_Alt, sample_fastq_dict = read_experiment_table(config['experiment_table'])
 events = ["SE", "A3", "A5", "MX", "RI"]
 
 rule all:
@@ -145,8 +174,8 @@ rule separateGroupPsi:
     input:
         psi_table = "SUPPA2/results/results_{event}.psi"
     output:
-        psi_group1 = "SUPPA2/results/psi_{event}_group1.tsv",
-        psi_group2 = "SUPPA2/results/psi_{event}_group2.tsv"
+        psi_Ref = "SUPPA2/results/psi_{event}_Ref.tsv",
+        psi_Alt = "SUPPA2/results/psi_{event}_Alt.tsv"
     threads:
         1
     benchmark:
@@ -163,7 +192,7 @@ rule separateGroupPsi:
         psi_df = pd.read_csv(input.psi_table, sep = "\t", skiprows = 1, names = header)
 
         # Separate the psi table into two groups
-        for group, samples in [("group1", samples_group1), ("group2", samples_group2)]:
+        for group, samples in [("Ref", samples_Ref), ("Alt", samples_Alt)]:
             group_df = psi_df[["id"] + samples].fillna("nan")
             group_header = "\t".join(samples)
             with open(output[f"psi_{group}"], "w") as out:
@@ -174,8 +203,8 @@ rule separateGroupTpm:
     input:
         merge_table = "SUPPA2/salmon_quant_merge.tsv",
     output:
-        tpm_group1 = "SUPPA2/results/tpm_group1.tsv",
-        tpm_group2 = "SUPPA2/results/tpm_group2.tsv"
+        tpm_Ref = "SUPPA2/results/tpm_Ref.tsv",
+        tpm_Alt = "SUPPA2/results/tpm_Alt.tsv"
     threads:
         1
     benchmark:
@@ -192,7 +221,7 @@ rule separateGroupTpm:
         merge_df = pd.read_csv(input.merge_table, sep = "\t", skiprows = 1, names = header)
 
         # Separate the merge table into two groups
-        for group, samples in [("group1", samples_group1), ("group2", samples_group2)]:
+        for group, samples in [("Ref", samples_Ref), ("Alt", samples_Alt)]:
             group_df = merge_df[["id"] + samples].fillna("nan")
             group_header = "\t".join(samples)
             with open(output[f"tpm_{group}"], "w") as out:
@@ -206,10 +235,10 @@ rule diffSplice:
         "docker://naotokubota/suppa:2.3"
     input:
         suppa2_events = "SUPPA2/events/events_{event}_strict.ioe",
-        psi_group1 = "SUPPA2/results/psi_{event}_group1.tsv",
-        psi_group2 = "SUPPA2/results/psi_{event}_group2.tsv",
-        tpm_group1 = "SUPPA2/results/tpm_group1.tsv",
-        tpm_group2 = "SUPPA2/results/tpm_group2.tsv"
+        psi_Ref = "SUPPA2/results/psi_{event}_Ref.tsv",
+        psi_Alt = "SUPPA2/results/psi_{event}_Alt.tsv",
+        tpm_Ref = "SUPPA2/results/tpm_Ref.tsv",
+        tpm_Alt = "SUPPA2/results/tpm_Alt.tsv"
     output:
         diff_splice_dpsi = "SUPPA2/results/diffSplice_{event}.dpsi",
         diff_splice_psivec = "SUPPA2/results/diffSplice_{event}.psivec"
@@ -227,11 +256,11 @@ rule diffSplice:
 		--method empirical \
 		--input {input.suppa2_events} \
 		--psi \
-		{input.psi_group1} \
-		{input.psi_group2} \
+		{input.psi_Ref} \
+		{input.psi_Alt} \
 		--tpm \
-		{input.tpm_group1} \
-		{input.tpm_group2} \
+		{input.tpm_Ref} \
+		{input.tpm_Alt} \
 		-gc \
 		-o {params.diff_splice_output} \
         --mode DEBUG \
