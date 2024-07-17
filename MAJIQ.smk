@@ -50,23 +50,33 @@ def convert_experiment_table_to_setting_file(experiment_table, genome, strandnes
         f.write(f"Ref={Ref_bam}\n")
         f.write(f"Alt={Alt_bam}\n")
 
-def parse_config_ini(config_ini):
+# Get samples per group
+def get_samples_per_group(experiment_table):
     '''
-    Parse config.ini file and return a dictionary
+    Get samples per group from experiment_table.tsv
     '''
-    config = configparser.ConfigParser()
-    config.read(config_ini)
-    samples_Ref = config["experiments"]["Ref"].split(",")
-    samples_Alt = config["experiments"]["Alt"].split(",")
+    df = pd.read_csv(experiment_table, sep = '\t')
+    samples_Ref = [os.path.splitext(os.path.basename(x))[0] for x in df[df['group'] == 'Ref']['bam'].tolist()]
+    samples_Alt = [os.path.splitext(os.path.basename(x))[0] for x in df[df['group'] == 'Alt']['bam'].tolist()]
     return samples_Ref, samples_Alt
-
-convert_experiment_table_to_setting_file(config["experiment_table"], config["genome"], config["strandness"])
-samples_Ref, samples_Alt = parse_config_ini("setting_file.ini")
+samples_Ref, samples_Alt = get_samples_per_group(config["experiment_table"])
 
 rule all:
     input:
-        heterogen_tsv = "heterogen/Ref-Alt.het.tsv",
+        heterogen_tsv = "heterogen/Alt-Ref.het.tsv",
         summary = "voila_modulize/summary.tsv"
+
+rule convert_experiment_table_to_setting_file:
+    output:
+        setting_file = "setting_file.ini",
+    threads:
+        1
+    benchmark:
+        "benchmark/convert_experiment_table_to_setting_file.txt"
+    log:
+        "log/convert_experiment_table_to_setting_file.log"
+    run:
+        convert_experiment_table_to_setting_file(config["experiment_table"], config["genome"], config["strandness"])
 
 rule build:
     container:
@@ -101,7 +111,7 @@ rule heterogen:
         majiq_ref = expand("build/{sample_ref}.majiq", sample_ref = samples_Ref),
         majiq_alt = expand("build/{sample_alt}.majiq", sample_alt = samples_Alt)
     output:
-        voila = "heterogen/Ref-Alt.het.voila"
+        voila = "heterogen/Alt-Ref.het.voila"
     params:
         majiq_ref = " ".join(["build/" + sample + ".majiq" for sample in samples_Ref]),
         majiq_alt = " ".join(["build/" + sample + ".majiq" for sample in samples_Alt])
@@ -116,9 +126,9 @@ rule heterogen:
         majiq heterogen \
         -j {threads} \
         -o heterogen \
-        -n Ref Alt \
-        -grp1 {params.majiq_ref} \
-        -grp2 {params.majiq_alt} \
+        -n Alt Ref \
+        -grp1 {params.majiq_alt} \
+        -grp2 {params.majiq_ref} \
         > {log} 2>&1
         """
 
@@ -126,10 +136,10 @@ rule voila_tsv:
     container:
         "/rhome/naotok/bigdata/singularity/majiq_0.1.sif"
     input:
-        voila = "heterogen/Ref-Alt.het.voila",
+        voila = "heterogen/Alt-Ref.het.voila",
         splicegraph = "build/splicegraph.sql"
     output:
-        tsv = "heterogen/Ref-Alt.het.tsv"
+        tsv = "heterogen/Alt-Ref.het.tsv"
     threads:
         workflow.cores
     benchmark:
@@ -151,7 +161,7 @@ rule voila_modulize:
         "/rhome/naotok/bigdata/singularity/majiq_0.1.sif"
     input:
         splicegraph = "build/splicegraph.sql",
-        voila = "heterogen/Ref-Alt.het.voila"
+        voila = "heterogen/Alt-Ref.het.voila"
     output:
         summary = "voila_modulize/summary.tsv"
     threads:
@@ -166,6 +176,7 @@ rule voila_modulize:
         -j {threads} \
         -d voila_modulize \
         --show-all \
+        --overwrite \
         {input.splicegraph} \
         {input.voila} \
         > {log} 2>&1
